@@ -32,7 +32,7 @@ df$log_total <- log(df$positive)
 
 
 
-# per capita data (hard coded to avoid dependencies and speed)
+# per capita data (hard-coded to avoid dependencies)
 state_pop <- rbind(cbind("AK",4903185),
                    cbind("AL",	731545),
                    cbind("AR",7278717),
@@ -85,10 +85,10 @@ state_pop <- rbind(cbind("AK",4903185),
                    cbind("WI",	5822434),
                    cbind("WY",578759),
                    cbind("PR",	3193694),
-                   cbind("AS", 0),
-                   cbind("GU",	0 ),
-                   cbind("MP", 0),
-                   cbind("VI",	0))
+                   cbind("AS", 55641),
+                   cbind("GU",	164229),
+                   cbind("MP", 53883),
+                   cbind("VI",	106405))
 
 
 state_pop <- data.frame(state = state_pop[,1], pop = state_pop[,2],stringsAsFactors = F)
@@ -98,9 +98,11 @@ df <- left_join(df, state_pop)
 
 df$pop <- as.numeric(df$pop)
 
-df$percapita_cases <- (df$positive/df$pop) *100000
+df$percapita_cases <- (df$positive/df$pop) *10000
 
-df$percapita_deaths <- (df$death/df$pop) *100000
+df$percapita_deaths <- (df$death/df$pop) *10000
+
+state_pop <- df %>% select(state, pop)
 
 # ------------------------------------------------------------------
 # create per capita plots
@@ -151,6 +153,45 @@ plot_grid(plot_total_maps, tbar, ncol = 2 )
 # plot death maps
 plot_grid(plot_death_maps,dbar, ncol = 2 )
 
+###############################################################################################
+###############################################################################################
+# ---------------------------------------------------------------------------------------------
+library(tidyverse)
+library(usmap)
+library(cowplot)
+library(lubridate)
 
+options(scipen=999)
+shd <- read_csv("https://covidtracking.com/api/v1/states/daily.csv")
+
+shd$date <- ymd(shd$date)
+
+daily <- left_join(shd, state_pop)
+
+
+daily %>% filter(state == "OR") %>% 
+ggplot(aes(date, positive/posNeg*100)) + 
+  geom_line(size=1, linetype = 'solid') + 
+  labs(x = NULL, y = "% postive cases tested") +
+  theme_bw() +
+  theme( axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+daily$percent_pos <- (daily$positive/daily$posNeg)*100
+ggplot(daily, aes(date, percent_pos)) + 
+  geom_line(size=1.2, linetype = 'solid') + 
+  labs(title = "Percent positive cases tested", x = NULL, y = "% postive cases per cases") +
+  theme_bw() +
+  theme( axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~state, ncol = 7)
+
+
+daily$percap_pos <- (daily$positive/daily$pop)*10000
+ggplot(daily, aes(date, percap_pos)) + 
+  geom_line(size=1.2, linetype = 'solid') + 
+  labs(title = " Positive cases per 10,000 people", x = NULL, y = "% postive cases by day") +
+  theme_bw() +
+  theme( axis.text.x = element_text(angle = 45, hjust = 1)) +
+  facet_wrap(~state, ncol = 7)
 
 
