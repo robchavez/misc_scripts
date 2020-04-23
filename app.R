@@ -2,9 +2,9 @@
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
 #
-# This app is published online here:
+# This shiny app is published online here:
 #
-#    http://robchavez.shinyapps.io/shiny
+#    https://robchavez.shinyapps.io/shiny/
 #
 
 #------------------------------------------------------------------------------------
@@ -116,7 +116,7 @@ ui <- fluidPage(
         
         # Create a spot for the barplot
         mainPanel(
-            plotOutput("statePlot", height = 800, width = 1000 )  
+            plotOutput("statePlot", height = 900, width = 1000 )  
         )
         
     )
@@ -138,7 +138,7 @@ server <- function(input, output) {
         
         perpos <- ggplot(tmp_df, aes(date,percent_pos)) + 
             geom_line(size=1, linetype = 'solid', color="chartreuse3") + 
-            labs(x = NULL, y = "percent postive cases") +
+            labs(x = NULL, y = "percent postive tests") +
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
         
@@ -159,7 +159,7 @@ server <- function(input, output) {
        
         postot <- ggplot(tmp_df, aes(date,positive)) + 
             geom_line(size=1, linetype = 'solid', color="blueviolet") + 
-            labs(x = NULL, y = "total positive tests") +
+            labs(x = NULL, y = "total positive cases") +
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
         
