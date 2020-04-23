@@ -116,7 +116,7 @@ ui <- fluidPage(
         
         # Create a spot for the barplot
         mainPanel(
-            plotOutput("statePlot", height = 900, width = 1000 )  
+            plotOutput("statePlot", height = 800, width = 1000 )  
         )
         
     )
@@ -159,7 +159,7 @@ server <- function(input, output) {
        
         postot <- ggplot(tmp_df, aes(date,positive)) + 
             geom_line(size=1, linetype = 'solid', color="blueviolet") + 
-            labs(x = NULL, y = "total positive cases") +
+            labs(x = NULL, y = "total positive tests") +
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
         
