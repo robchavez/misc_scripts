@@ -7,41 +7,19 @@
 #    http://shiny.rstudio.com/
 #
 
-library(shiny)
+#------------------------------------------------------------------------------------
 library(tidyverse)
 library(usmap)
 library(cowplot)
+library(lubridate)
+library(shiny)
 
-# code generated on 3/18/2020
-df <- read_csv("https://covidtracking.com/api/states.csv")
+options(scipen=999)
+shd <- read_csv("https://covidtracking.com/api/v1/states/daily.csv")
 
+shd$date <- ymd(shd$date)
 
-# bar plots 
-tbar <- ggplot(df, aes(reorder(df$state, df$positive), positive)) + 
-    geom_bar(stat = 'identity', fill='steelblue4') + 
-    coord_flip() +
-    theme_minimal()  +
-    geom_hline(yintercept = 0) +
-    labs(x=NULL, y = "total cases", title = "COVID-19 total cases")
-
-
-df$death_nona <- ifelse(is.na(df$death) == TRUE, 0, df$death)
-dbar <- ggplot(df, aes(reorder(df$state, df$death_nona), death_nona)) + 
-    geom_bar(stat = 'identity', fill = 'steelblue4') + 
-    coord_flip() +
-    theme_minimal()  +
-    geom_hline(yintercept = 0) +
-    labs(x=NULL, y = "deaths", title = "COVID-19 deaths")
-
-# calculate log values
-df$log_deaths <- log(df$death)
-df$log_total <- log(df$positive)
-
-
-
-
-
-# per capita data (hard coded to avoid dependencies and speed)
+# per capita data (hard-coded to avoid dependencies)
 state_pop <- rbind(cbind("AK",4903185),
                    cbind("AL",	731545),
                    cbind("AR",7278717),
@@ -94,140 +72,116 @@ state_pop <- rbind(cbind("AK",4903185),
                    cbind("WI",	5822434),
                    cbind("WY",578759),
                    cbind("PR",	3193694),
-                   cbind("AS", 0),
-                   cbind("GU",	0 ),
-                   cbind("MP", 0),
-                   cbind("VI",	0))
+                   cbind("AS", 55641),
+                   cbind("GU",	164229),
+                   cbind("MP", 53883),
+                   cbind("VI",	106405))
 
 
 state_pop <- data.frame(state = state_pop[,1], pop = state_pop[,2],stringsAsFactors = F)
 
-
-df <- left_join(df, state_pop) 
-
-df$pop <- as.numeric(df$pop)
-
-df$percapita_cases <- (df$positive/df$pop) *100000
-
-df$percapita_deaths <- (df$death/df$pop) *100000
-
-# ------------------------------------------------------------------
-# create per capita plots
-pcap_total <- plot_usmap(data = df, values = "percapita_cases", lines = "gray50") +
-    scale_fill_viridis_c(name = "per capita cases", option = 'viridis') + 
-    theme(legend.position = "bottom") +
-    ggtitle("Per capita - COVID-19 total cases per 100,000 people")
-
-pcap_deaths <- plot_usmap(data = df, values = "percapita_deaths", lines = "gray50") +
-    scale_fill_viridis_c(name = "per capita deaths", option = 'viridis') + 
-    theme(legend.position = "bottom") +
-    ggtitle("Per capita - COVID-19 total deaths per 100,000 people")
+daily <- left_join(shd, state_pop)
+daily$pop <- as.numeric(daily$pop )
 
 
-# create total cases maps
-ptotal <- plot_usmap(data = df, values = "total", lines = "gray50") +
-    scale_fill_viridis_c(name = "total cases", option = 'viridis') + 
-    theme(legend.position = "bottom") +
-    ggtitle("COVID-19 total cases")
-
-ptotal_log <- plot_usmap(data = df, values = "log_total", lines = "gray50") +
-    scale_fill_viridis_c(name = "log total cases", option = 'viridis') + 
-    theme(legend.position = "bottom") +
-    ggtitle("COVID-19 total cases (log values)")
-
-plot_total_maps <- plot_grid(ptotal, pcap_total, ptotal_log, ncol = 1)
-
-
-# create deaths maps
-pdeaths <- plot_usmap(data = df, values = "death", lines = "gray50") +
-    scale_fill_viridis_c(name = "deaths", option = 'viridis') + 
-    theme(legend.position = "bottom") +
-    ggtitle("COVID-19 deaths")
-
-
-pdeaths_log <- plot_usmap(data = df, values = "log_deaths", lines = "gray50") +
-    scale_fill_viridis_c(name = "log deaths", option = 'viridis') + 
-    theme(legend.position = "bottom") +
-    ggtitle("COVID-19 deaths (log values)")
-
-plot_death_maps <- plot_grid(pdeaths, pcap_deaths, pdeaths_log, ncol = 1)
-
-
-# plot total cases maps
-total_cases <- plot_grid(plot_total_maps, tbar, ncol = 2 )
-
-# plot death maps
-deaths <- plot_grid(plot_death_maps,dbar, ncol = 2 )
-
-pnames <- c("cases", "deaths")
-plist <- list(cases = total_cases, deaths = deaths)
+daily$percent_pos <- (daily$positive/daily$posNeg)*100
 
 
 
-##########################################################################################################
-##########################################################################################################
-##########################################################################################################
-##########################################################################################################
-##########################################################################################################
+daily$percap_pos <- ((daily$positive/daily$pop)*10000)
+daily$mask <- daily$percap_pos /daily$percap_pos 
 
 
-#------------------------------------------------------------------------------------------
-# plot total cases maps
-#plot_grid(plot_total_maps, tbar, ncol = 2 )
+app_states <- unique(daily$state)
 
-# plot death maps
-#plot_grid(plot_death_maps,dbar, ncol = 2 )
+#---------------------------------------------------------------------------------
 
 
 # Define UI for application that draws a histogram
-ui <- fluidPage(    
-        
-        # Give the page a title
-        titlePanel("COVID-19"),
-        
-        # Generate a row with a sidebar
-        sidebarLayout(      
+ui <- fluidPage(
+
+    # Application title
+    titlePanel("COVID-19 state information"),
+
+    # Sidebar with a slider input for number of bins 
+    sidebarLayout(
+        sidebarPanel(
             
-            # Define the sidebar with one input
-            sidebarPanel(
-                selectInput("region", "map:", 
-                            choices=pnames),
-                hr(),
-                helpText("Data from:  https://covidtracking.com")
+            selectInput("app_states", label = "select state",
+                        choices = app_states),
+            
+            hr(),
+            helpText("Data from:  https://covidtracking.com")
             , width = 2),
-            
-            # Create a spot for the barplot
-            mainPanel(
-                plotOutput("phonePlot", height = 1200, width = 1200 )  
-            )
-            
+        
+        # Create a spot for the barplot
+        mainPanel(
+            plotOutput("statePlot", height = 900, width = 1000 )  
         )
+        
     )
+)
 
-
-
-
-
-
-# ------------------------------------------------------------------------------------------
 
 # Define server logic required to draw a histogram
-
-
 server <- function(input, output) {
 
-    
-    
+    output$statePlot <- renderPlot({
 
         
-    output$phonePlot <- renderPlot({
+        tmp_df <- daily %>% filter(state == input$app_states)
+        tmp_df$percent_pos <- (tmp_df$positive/tmp_df$posNeg)*100
+
         
-            plist[input$region]
-    
-        })
-    
-    
-    
+        map <- plot_usmap(data = tmp_df, values = "mask", lines = "white") +
+            theme(legend.position = "none") 
+        
+        perpos <- ggplot(tmp_df, aes(date,percent_pos)) + 
+            geom_line(size=1, linetype = 'solid', color="chartreuse3") + 
+            labs(x = NULL, y = "percent postive cases") +
+            theme_bw() +
+            theme( axis.text.x = element_text(angle = 45, hjust = 1))
+        
+        
+        testdaily <- ggplot(tmp_df, aes(date,totalTestResultsIncrease)) + 
+            geom_line(size=1, linetype = 'solid', color="chartreuse3") + 
+            geom_smooth(se = F, color = 'black', linetype="dashed", span=.3, size=.8) +            
+            labs(x = NULL, y = "number of tests per day") +
+            theme_bw() +
+            theme( axis.text.x = element_text(angle = 45, hjust = 1))
+        
+        posdaily <- ggplot(tmp_df, aes(date,positiveIncrease)) + 
+            geom_line(size=1, linetype = 'solid', color="blueviolet") +
+            geom_smooth(se = F, color = 'black', linetype="dashed", span=.3, size=.8) +  
+            labs(x = NULL, y = "positive cases per day") +
+            theme_bw() +
+            theme( axis.text.x = element_text(angle = 45, hjust = 1))
+       
+        postot <- ggplot(tmp_df, aes(date,positive)) + 
+            geom_line(size=1, linetype = 'solid', color="blueviolet") + 
+            labs(x = NULL, y = "total positive cases") +
+            theme_bw() +
+            theme( axis.text.x = element_text(angle = 45, hjust = 1))
+        
+        deathdaily <- ggplot(tmp_df, aes(date,deathIncrease)) + 
+            geom_line(size=1, linetype = 'solid', color="firebrick3") +
+            geom_smooth(se = F, color = 'black', linetype="dashed", span=.3, size=.8) +  
+            labs(x = NULL, y = "deaths per day") +
+            theme_bw() +
+            theme( axis.text.x = element_text(angle = 45, hjust = 1))
+        
+        deathtot <- ggplot(tmp_df, aes(date,death)) + 
+            geom_line(size=1, linetype = 'solid', color="firebrick3") + 
+            labs(x = NULL, y = "total deaths") +
+            theme_bw() +
+            theme( axis.text.x = element_text(angle = 45, hjust = 1))
+        
+
+        
+        g2 <- plot_grid(posdaily, postot, deathdaily, deathtot, testdaily, perpos, nrow = 4)
+        plot_grid(g2, map, nrow = 1)
+
+    })
 }
 
 # Run the application 
