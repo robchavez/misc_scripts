@@ -2,9 +2,9 @@
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
 #
-# This shiny app is published online here:
+# Find out more about building applications with Shiny here:
 #
-#    https://robchavez.shinyapps.io/shiny/
+#    http://shiny.rstudio.com/
 #
 
 #------------------------------------------------------------------------------------
@@ -138,21 +138,21 @@ server <- function(input, output) {
         
         perpos <- ggplot(tmp_df, aes(date,percent_pos)) + 
             geom_line(size=1, linetype = 'solid', color="chartreuse3") + 
-            labs(x = NULL, y = "percent postive tests") +
+            labs(x = NULL, y = "percent postive cases") +
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
         
         
         testdaily <- ggplot(tmp_df, aes(date,totalTestResultsIncrease)) + 
             geom_line(size=1, linetype = 'solid', color="chartreuse3") + 
-            geom_smooth(se = F, color = 'black', linetype="dashed", span=.3, size=.8) +            
+            geom_smooth(se = F, color = 'black', linetype="dashed", span=.3) +            
             labs(x = NULL, y = "number of tests per day") +
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
         
         posdaily <- ggplot(tmp_df, aes(date,positiveIncrease)) + 
             geom_line(size=1, linetype = 'solid', color="blueviolet") +
-            geom_smooth(se = F, color = 'black', linetype="dashed", span=.3, size=.8) +  
+            geom_smooth(se = F, color = 'black', linetype="dashed", span=.3) +  
             labs(x = NULL, y = "positive cases per day") +
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
@@ -165,20 +165,20 @@ server <- function(input, output) {
         
         deathdaily <- ggplot(tmp_df, aes(date,deathIncrease)) + 
             geom_line(size=1, linetype = 'solid', color="firebrick3") +
-            geom_smooth(se = F, color = 'black', linetype="dashed", span=.3, size=.8) +  
+            geom_smooth(se = F, color = 'black', linetype="dashed", span=.3) +  
             labs(x = NULL, y = "deaths per day") +
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
         
         deathtot <- ggplot(tmp_df, aes(date,death)) + 
-            geom_line(size=1, linetype = 'solid', color="firebrick3") + 
+            geom_line(size=1, linetype = 'solid', color="green") + 
             labs(x = NULL, y = "total deaths") +
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
         
 
         
-        g2 <- plot_grid(posdaily, postot, deathdaily, deathtot, testdaily, perpos, nrow = 4)
+        g2 <- plot_grid(testdaily, perpos,posdaily, postot, deathdaily, deathtot, nrow = 4)
         plot_grid(g2, map, nrow = 1)
 
     })
