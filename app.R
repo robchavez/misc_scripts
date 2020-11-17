@@ -2,9 +2,9 @@
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
 #
-# Find out more about building applications with Shiny here:
+# This shiny app is published online here:
 #
-#    http://shiny.rstudio.com/
+#    https://robchavez.shinyapps.io/shiny/
 #
 
 #------------------------------------------------------------------------------------
@@ -133,52 +133,76 @@ server <- function(input, output) {
         tmp_df$percent_pos <- (tmp_df$positive/tmp_df$posNeg)*100
 
         
-        map <- plot_usmap(data = tmp_df, values = "mask", lines = "white") +
+        map <- plot_usmap(data = tmp_df, values = "mask", color = "white") +
             theme(legend.position = "none") 
         
         perpos <- ggplot(tmp_df, aes(date,percent_pos)) + 
-            geom_line(size=1, linetype = 'solid', color="chartreuse3") + 
-            labs(x = NULL, y = "percent postive cases") +
+            geom_line(size=.7, linetype = 'solid', color="chartreuse3") + 
+            labs(x = NULL, y = NULL, title = "Percent Postive Tests",
+                 subtitle = paste0("today: ", round(tmp_df$percent_pos[1], digits = 2),"%")) +
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
         
         
         testdaily <- ggplot(tmp_df, aes(date,totalTestResultsIncrease)) + 
-            geom_line(size=1, linetype = 'solid', color="chartreuse3") + 
-            geom_smooth(se = F, color = 'black', linetype="dashed", span=.3) +            
-            labs(x = NULL, y = "number of tests per day") +
+            geom_line(size=.7, linetype = 'solid', color="chartreuse3") + 
+            geom_smooth(se = F, color = 'black', linetype="longdash", span=.3, size=.4) +            
+            labs(x = NULL, y = NULL, title = "Number of Tests Per Day",
+                 subtitle = paste0("today: ", tmp_df$totalTestResultsIncrease[1])) +
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
         
         posdaily <- ggplot(tmp_df, aes(date,positiveIncrease)) + 
-            geom_line(size=1, linetype = 'solid', color="blueviolet") +
-            geom_smooth(se = F, color = 'black', linetype="dashed", span=.3) +  
-            labs(x = NULL, y = "positive cases per day") +
+            geom_line(size=.7, linetype = 'solid', color="blueviolet") +
+            geom_smooth(se = F, color = 'black', linetype="longdash", span=.3, size=.4) +  
+            labs(x = NULL, y = NULL, title = "Positive Cases Per Day",
+                 subtitle = paste0("today: ", tmp_df$positiveIncrease[1])) +
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
        
         postot <- ggplot(tmp_df, aes(date,positive)) + 
-            geom_line(size=1, linetype = 'solid', color="blueviolet") + 
-            labs(x = NULL, y = "total positive cases") +
+            geom_line(size=.7, linetype = 'solid', color="blueviolet") + 
+            labs(x = NULL, y = NULL, title = "Total Positive Cases",
+                 subtitle = paste0("total: ", tmp_df$positive[1])) +
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
         
         deathdaily <- ggplot(tmp_df, aes(date,deathIncrease)) + 
-            geom_line(size=1, linetype = 'solid', color="firebrick3") +
-            geom_smooth(se = F, color = 'black', linetype="dashed", span=.3) +  
-            labs(x = NULL, y = "deaths per day") +
+            geom_line(size=.7, linetype = 'solid', color="firebrick3") +
+            geom_smooth(se = F, color = 'black', linetype="longdash", span=.3, size=.4) +  
+            labs(x = NULL, y = NULL, title = "Deaths Per Day",
+                 subtitle = paste0("today: ", tmp_df$deathIncrease[1])) +
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
         
         deathtot <- ggplot(tmp_df, aes(date,death)) + 
-            geom_line(size=1, linetype = 'solid', color="green") + 
-            labs(x = NULL, y = "total deaths") +
+            geom_line(size=.7, linetype = 'solid', color="firebrick3") + 
+            labs(x = NULL, y = NULL, title = "Total Deaths",
+                 subtitle = paste0("total: ", tmp_df$death[1])) + 
             theme_bw() +
             theme( axis.text.x = element_text(angle = 45, hjust = 1))
         
+        
+        # hospitalized
+        
+        hospdaily <- ggplot(tmp_df, aes(date,hospitalizedCurrently)) + 
+            geom_line(size=.7, linetype = 'solid', color="slateblue4") + 
+            geom_smooth(se = F, color = 'black', linetype="longdash", span=.3, size=.4) +  
+            labs(x = NULL, y = NULL, title = "Hospitalized Currently", 
+                 subtitle = paste0("today: ", tmp_df$hospitalizedCurrently[1])) +
+            theme_bw() +
+            theme( axis.text.x = element_text(angle = 45, hjust = 1))
+        
+        ICUdaily <- ggplot(tmp_df, aes(date,inIcuCurrently)) + 
+            geom_line(size=.7, linetype = 'solid', color="slateblue4") + 
+            geom_smooth(se = F, color = 'black', linetype="longdash", span=.3, size=.4) +  
+            labs(x = NULL, y = NULL, title = "In ICU Currently (if available)",
+                 subtitle = paste0("today: ", tmp_df$inIcuCurrently[1])) +
+            theme_bw() +
+            theme( axis.text.x = element_text(angle = 45, hjust = 1))
 
         
-        g2 <- plot_grid(testdaily, perpos,posdaily, postot, deathdaily, deathtot, nrow = 4)
+        g2 <- plot_grid(posdaily, postot, deathdaily, deathtot, testdaily, perpos, hospdaily, ICUdaily, nrow = 4)
         plot_grid(g2, map, nrow = 1)
 
     })
