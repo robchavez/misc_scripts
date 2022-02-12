@@ -20,11 +20,11 @@ ggplot() +
   geom_curve(aes(x = 0, y = 6.4, xend = 1, yend = 2.5), curvature = -.3, color='forestgreen') +
   geom_curve(aes(x = -.8, y = 6.2, xend = 0.2, yend = 2.5), curvature = -.3, color='forestgreen') +
 
-   #STS
+  #STS
   geom_curve(aes(x = -3.5, y = 0, xend = 0, yend = -2), curvature = .3, color='forestgreen') +
   geom_curve(aes(x = -3, y = 1, xend = 0, yend = -1), curvature = .3, color='forestgreen') +
 
- # parietal
+  #parietal
   geom_curve(aes(x = -3, y = 3, xend = -2, yend = 4), curvature = -.3, color='forestgreen') +
   
   geom_curve(aes(x = -.3, y = .5, xend = -.4, yend = 2), curvature = -.3, color='forestgreen') +
